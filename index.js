@@ -1500,27 +1500,27 @@ jQuery(async () => {
             // 设置控制项
             const $settingsBlock = $('<div class="chat_backup_control_item"></div>');
             $settingsBlock.html(`
-                <div style="margin-bottom: 12px;">
+                <div style="margin-bottom: 8px;">
                     <label style="display: inline-block; min-width: 120px;">防抖延迟 (ms):</label>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="chat_backup_debounce_delay" value="${settings.backupDebounceDelay}" 
-                        title="编辑或删除消息后，等待多少毫秒再执行备份 (建议 1000-1500)" 
-                        style="width: 100px;" />
+                    <input type="number" id="chat_backup_debounce_delay" value="${settings.backupDebounceDelay}" 
+                        min="300" max="30000" step="100" title="编辑或删除消息后，等待多少毫秒再执行备份 (建议 1000-1500)" 
+                        style="width: 80px;" inputmode="numeric" pattern="[0-9]*" />
                 </div>
-                <div style="margin-bottom: 12px;">
+                <div style="margin-bottom: 8px;">
                     <label style="display: inline-block; min-width: 120px;">最大角色/群组数:</label>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="chat_backup_max_entity" value="${settings.maxEntityCount}" 
-                        title="保留多少个不同角色/群组的备份" 
-                        style="width: 100px;" />
+                    <input type="number" id="chat_backup_max_entity" value="${settings.maxEntityCount}" 
+                        min="1" max="10" step="1" title="保留多少个不同角色/群组的备份" 
+                        style="width: 80px;" inputmode="numeric" pattern="[0-9]*" />
                 </div>
                 <div>
                     <label style="display: inline-block; min-width: 120px;">每组最大备份数:</label>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="chat_backup_max_per_entity" value="${settings.maxBackupsPerEntity}" 
-                        title="每个角色/群组保留多少个备份" 
-                        style="width: 100px;" />
+                    <input type="number" id="chat_backup_max_per_entity" value="${settings.maxBackupsPerEntity}" 
+                        min="1" max="10" step="1" title="每个角色/群组保留多少个备份" 
+                        style="width: 80px;" inputmode="numeric" pattern="[0-9]*" />
                 </div>
             `);
             $('.chat_backup_controls').prepend($settingsBlock);
-            
+                       
             // 设置使用说明按钮
             setupHelpButton();
             
@@ -1553,12 +1553,14 @@ jQuery(async () => {
 
         // 防抖延迟设置
         $(document).on('input', '#chat_backup_debounce_delay', function() {
-            const value = $(this).val().trim();
-            const delay = parseInt(value, 10);
+            const delay = parseInt($(this).val(), 10);
             if (!isNaN(delay) && delay >= 300 && delay <= 30000) {
                 settings.backupDebounceDelay = delay;
                 logDebug(`防抖延迟已更新为: ${delay}ms`);
                 saveSettingsDebounced();
+            } else {
+                logDebug(`无效的防抖延迟输入: ${$(this).val()}`);
+                $(this).val(settings.backupDebounceDelay);
             }
         });
 
@@ -2380,16 +2382,20 @@ function setupHelpButton() {
     // 首先确保使用说明按钮已添加到HTML中
     if ($('#chat_backup_help_button').length === 0) {
         const helpButton = $('<button id="chat_backup_help_button" class="menu_button"><i class="fa-solid fa-circle-question"></i> 使用说明</button>');
-        // 将按钮添加到调试开关后面
-        $('.chat_backup_controls .chat_backup_control_item:first').after(
-            $('<div class="chat_backup_control_item"></div>').append(helpButton)
-        );
+        const backupButton = $('<button id="chat_backup_manual_backup" class="menu_button"><i class="fa-solid fa-floppy-disk"></i> 立即备份</button>');
+        
+        // 创建包含两个按钮的容器
+        const buttonContainer = $('<div class="chat_backup_control_item"></div>').append(helpButton).append(backupButton);
+        
+        // 将按钮容器添加到调试开关后面
+        $('.chat_backup_controls .chat_backup_control_item:first').after(buttonContainer);
     }
     
     // 为使用说明按钮添加点击事件
     $(document).on('click', '#chat_backup_help_button', function() {
         showHelpPopup();
     });
+    // 注意：备份按钮的点击事件已在 setupUIEvents 中绑定
 }
 
 // 使用说明弹窗内容和展示
